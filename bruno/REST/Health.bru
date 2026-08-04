@@ -1,0 +1,26 @@
+meta {
+  name: Health (REST)
+  type: http
+  seq: 1
+}
+
+get {
+  url: {{baseUrl}}/api/health
+  body: none
+  auth: none
+}
+
+tests {
+  test("application is helpdoit-api", function() {
+    expect(res.getBody().application).to.equal("helpdoit-api");
+  })
+
+  test("status begins with ok-", function() {
+    expect(res.getBody().status).to.match(/^ok-/);
+  })
+}
+
+docs {
+  Smoke-test for the REST endpoint the Chrome extension talks to. Returns the
+  Spring Boot version in the status string so you can confirm what's deployed.
+}

@@ -1,0 +1,9 @@
+{
+  "version": "1",
+  "name": "helpdo.it API",
+  "type": "collection",
+  "ignore": [
+    "node_modules",
+    ".git"
+  ]
+}

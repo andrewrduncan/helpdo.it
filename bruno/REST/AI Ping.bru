@@ -1,0 +1,17 @@
+meta {
+  name: AI Ping (embedding)
+  type: http
+  seq: 2
+}
+
+get {
+  url: {{baseUrl}}/api/ai/ping
+  body: none
+  auth: none
+}
+
+docs {
+  Embeds a fixed string via EmbeddingPort and reports the vector shape.
+  Cheap smoke-test of the OpenRouter embedding path. Needs OPENROUTER_API_KEY.
+  Expect: { reportedDimensions: 1536, actualVectorLength: 1536 }.
+}

@@ -1,0 +1,10 @@
+{
+  "type": "object",
+  "properties": {
+    "instanceUrl": {
+      "title": "helpdo.it instance URL",
+      "description": "Base URL of the helpdo.it API instance. When set by policy it is read-only in the extension.",
+      "type": "string"
+    }
+  }
+}

@@ -1,0 +1,112 @@
+scalar JSON
+scalar DateTime
+
+# =============================================================================
+# helpdo.it GraphQL API
+#
+# Consumed by the admin training web interface (knowledge authoring, the
+# question review queue, the feedback queue). The Chrome extension talks to the
+# REST API instead (see com.helpdoit.api.HealthRestController and /api/**).
+# =============================================================================
+
+type Query {
+    health: Health!
+
+    "Registered domains (page hostnames), host-ordered — pick one to view its knowledge."
+    domains: [Domain!]!
+
+    "Knowledge corpus entries for one domain (most recently updated first). Returns empty when domainId is omitted — a domain must be chosen first."
+    knowledgeEntries(domainId: ID): [KnowledgeEntry!]!
+
+    "User questions, scoped to a domain. Pass status='queued' for the outstanding queue; omit domainId for all domains."
+    questions(status: String, domainId: ID): [Question!]!
+
+    "Users with their role assignments (admin only). Optional case-insensitive search on email/name."
+    users(search: String): [UserAccount!]!
+
+    "The fixed system roles (admin only)."
+    roles: [RoleInfo!]!
+}
+
+# Role assignment is admin-only. Roles are a fixed system vocabulary — there is
+# no create/edit/delete, only assignment. An admin cannot remove their own admin.
+type Mutation {
+    "Assign a role to a user."
+    assignRole(userId: ID!, role: String!): UserAccount!
+
+    "Remove a role from a user (cannot remove your own admin role)."
+    removeRole(userId: ID!, role: String!): UserAccount!
+
+    "Delete a question from the queue (trainer or admin)."
+    deleteQuestion(id: ID!): Boolean!
+
+    "Delete a knowledge entry — de-indexes it from retrieval (trainer or admin)."
+    deleteKnowledgeEntry(id: ID!): Boolean!
+}
+
+type Health {
+    application: String!
+    status: String!
+}
+
+# A user and the roles assigned to them.
+type UserAccount {
+    id: ID!
+    email: String!
+    name: String
+    roles: [String!]!
+}
+
+# A fixed system role.
+type RoleInfo {
+    key: String!
+    description: String
+}
+
+# A domain — one per page hostname. Knowledge is partitioned by domain.
+type Domain {
+    id: ID!
+    host: String!
+    name: String
+    status: String!
+}
+
+# Trained knowledge / admin-authored answers — what RAG retrieves from.
+type KnowledgeEntry {
+    id: ID!
+    title: String!
+    content: String!
+    source: String
+    status: String!
+    "The page this entry was authored on (from metadata) — where Edit/Retrain opens."
+    pageUrl: String
+    createdAt: DateTime
+    updatedAt: DateTime
+}
+
+# A user question + captured context. answeredByEntry links to the knowledge
+# entry that resolved it (null while queued).
+type Question {
+    id: ID!
+    text: String!
+    status: String!
+    askedBy: String
+    answeredByEntry: ID
+    pageUrl: String
+    pageContext: String
+    createdAt: DateTime
+    "Files the user attached to the question (image bytes fetched via REST)."
+    attachments: [QuestionAttachment!]!
+}
+
+# An attachment on a question. kind: image | text | unsupported. For images,
+# hasImage=true → GET /api/questions/{questionId}/attachments/{id} for the bytes.
+# For documents, textPreview holds the start of the extracted text.
+type QuestionAttachment {
+    id: ID!
+    filename: String!
+    contentType: String!
+    kind: String!
+    hasImage: Boolean!
+    textPreview: String
+}

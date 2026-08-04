@@ -1,0 +1,417 @@
+/* ---------------------------------------------------------------------------
+ * helpdo.it admin theme — Pico CSS variable overrides.
+ * Structure mirrors promptlydo.it's client: Inter font, rounded corners, and
+ * dark/light via [data-theme] + prefers-color-scheme. Accent is the brand teal
+ * #0D9488 instead of Pico's default blue.
+ * ------------------------------------------------------------------------- */
+:root {
+  --pico-font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --pico-border-radius: 10px;
+
+  /* Brand teal primary (drives buttons, links, focus, active nav) */
+  --pico-primary: #0d9488;
+  --pico-primary-background: #0d9488;
+  --pico-primary-hover: #0f766e;
+  --pico-primary-hover-background: #0f766e;
+  --pico-primary-focus: rgba(13, 148, 136, 0.25);
+  --pico-primary-inverse: #ffffff;
+  --pico-primary-underline: rgba(13, 148, 136, 0.5);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --pico-background-color: #1e2025;
+    --pico-card-background-color: #28292e;
+    --pico-card-sectioning-background-color: #28292e;
+    --pico-muted-border-color: rgba(255, 255, 255, 0.1);
+    --pico-color: #e8eaef;
+    --pico-muted-color: #9499a8;
+    --pico-form-element-background-color: #2e3036;
+    --pico-form-element-border-color: rgba(255, 255, 255, 0.12);
+  }
+}
+[data-theme='dark'] {
+  --pico-background-color: #1e2025;
+  --pico-card-background-color: #28292e;
+  --pico-card-sectioning-background-color: #28292e;
+  --pico-muted-border-color: rgba(255, 255, 255, 0.1);
+  --pico-color: #e8eaef;
+  --pico-muted-color: #9499a8;
+  --pico-form-element-background-color: #2e3036;
+  --pico-form-element-border-color: rgba(255, 255, 255, 0.12);
+}
+
+/* ---------------------------------------------------------------------------
+ * App shell: fixed sidebar + topbar + scrolling main.
+ * ------------------------------------------------------------------------- */
+body {
+  margin: 0;
+}
+
+.app-shell {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  min-height: 100vh;
+}
+
+.sidebar {
+  background: var(--pico-card-background-color);
+  border-right: 1px solid var(--pico-muted-border-color);
+  padding: 16px 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.sidebar .brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  font-size: 18px;
+  padding: 8px 10px 16px;
+}
+.sidebar .brand img {
+  width: 26px;
+  height: 26px;
+}
+.sidebar nav a {
+  display: block;
+  padding: 9px 12px;
+  border-radius: 8px;
+  color: var(--pico-color);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 500;
+}
+.sidebar nav a:hover {
+  background: var(--pico-muted-border-color);
+}
+.sidebar nav a.active {
+  background: var(--pico-primary);
+  color: var(--pico-primary-inverse);
+}
+.sidebar .spacer {
+  flex: 1;
+}
+
+.main {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 24px;
+  border-bottom: 1px solid var(--pico-muted-border-color);
+}
+.topbar h1 {
+  margin: 0;
+  font-size: 18px;
+}
+.topbar .actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.topbar button {
+  width: auto;
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.topbar .domain-picker {
+  margin: 0;
+}
+.topbar .domain-picker select {
+  margin: 0;
+  padding: 6px 28px 6px 12px;
+  font-size: 13px;
+  width: auto;
+  max-width: 18rem;
+  height: auto;
+}
+.sidebar-user {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  padding: 12px;
+}
+.sidebar-user .avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+.sidebar-user .avatar-fallback {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--pico-primary, #0d9488);
+  color: #fff;
+  font-weight: 700;
+  font-size: 18px;
+}
+.sidebar-user small {
+  word-break: break-word;
+}
+.sidebar-user button {
+  width: 100%;
+  margin: 0;
+  padding: 6px 12px;
+  font-size: 13px;
+}
+.content {
+  padding: 24px;
+}
+
+/* Login */
+.login-wrap {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+}
+.login-card {
+  width: 100%;
+  max-width: 380px;
+  text-align: center;
+}
+.login-card .brand {
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--pico-primary);
+}
+
+/* Cards / stat tiles */
+.tiles {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: 16px;
+}
+.tile small {
+  color: var(--pico-muted-color);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 11px;
+  font-weight: 600;
+}
+.tile .value {
+  font-size: 28px;
+  font-weight: 700;
+}
+.muted {
+  color: var(--pico-muted-color);
+}
+.placeholder {
+  border: 1px dashed var(--pico-muted-border-color);
+  border-radius: 10px;
+  padding: 32px;
+  text-align: center;
+  color: var(--pico-muted-color);
+}
+
+/* Filter buttons (standalone pills — avoids Pico role=group focus-ring overflow) */
+.filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.filters .filter-btn {
+  width: auto;
+  margin: 0;
+  padding: 6px 16px;
+  font-size: 13px;
+  text-transform: capitalize;
+}
+
+/* Status pills */
+.badge {
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: capitalize;
+  white-space: nowrap;
+}
+.badge-queued {
+  background: #fef3c7;
+  color: #92400e;
+}
+.badge-answered,
+.badge-active {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+.badge-resolved {
+  background: #dcfce7;
+  color: #166534;
+}
+.badge-retired {
+  background: #e5e7eb;
+  color: #4b5563;
+}
+
+/* Tables: keep cells from wrapping the first (question/title) column too tightly */
+table td:first-child {
+  font-weight: 500;
+}
+
+.badge-role {
+  background: #ccfbf1;
+  color: #0f766e;
+}
+
+/* Users & Roles: searchable picker (left) + role detail (right) */
+.users-page {
+  display: grid;
+  grid-template-columns: minmax(280px, 1fr) minmax(280px, 1fr);
+  gap: 24px;
+  align-items: start;
+}
+.user-picker input[type='search'] {
+  margin-bottom: 12px;
+}
+.user-list {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.user-row {
+  width: 100%;
+  margin: 0;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 8px 14px;
+  line-height: 1.3;
+  background: var(--pico-card-background-color);
+  /* Pico colors button text white by default — restore normal foreground so the
+     name (which has no explicit color) is visible, not white-on-white. */
+  color: var(--pico-color);
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 10px;
+  cursor: pointer;
+}
+.user-row.is-selected {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 2px rgba(13, 148, 136, 0.18);
+}
+.user-id {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+.user-name {
+  font-size: 1rem;
+  font-weight: 600;
+  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.user-email {
+  font-size: 0.75rem;
+  line-height: 1.2;
+}
+.user-rolechips {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+.role-toggles {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.role-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border: 1px solid var(--pico-muted-border-color);
+  border-radius: 10px;
+}
+.role-toggle button {
+  width: auto;
+  margin: 0;
+  padding: 6px 16px;
+  font-size: 13px;
+}
+
+/* Per-row actions (Question Queue: Train / Delete) */
+/* Question attachments shown under the question text in the queue. */
+.attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 8px;
+}
+.attachment-thumb {
+  height: 56px;
+  width: auto;
+  max-width: 120px;
+  object-fit: cover;
+  border-radius: 6px;
+  border: 1px solid var(--pico-muted-border-color, #d1d5db);
+}
+.attachment-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  padding: 3px 8px;
+  border-radius: 8px;
+  background: var(--pico-card-sectioning-background-color, #f3f4f6);
+  border: 1px solid var(--pico-muted-border-color, #e5e7eb);
+}
+
+.row-actions {
+  text-align: right;
+  white-space: nowrap;
+}
+.row-actions button {
+  width: auto;
+  margin: 0 0 0 6px;
+  padding: 4px 12px;
+  font-size: 12px;
+}
+button.danger {
+  background: var(--pico-del-color, #b91c1c);
+  border-color: var(--pico-del-color, #b91c1c);
+  color: #fff;
+}
+button.danger:hover {
+  background: #991b1b;
+  border-color: #991b1b;
+}
+button.danger.outline {
+  background: transparent;
+  color: var(--pico-del-color, #b91c1c);
+  border: 1px solid var(--pico-del-color, #b91c1c);
+}
+button.danger.outline:hover {
+  background: var(--pico-del-color, #b91c1c);
+  color: #fff;
+}
+
+/* Modal (native <dialog>) footer: right-aligned actions */
+dialog article footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+dialog article footer button {
+  width: auto;
+  margin: 0;
+}

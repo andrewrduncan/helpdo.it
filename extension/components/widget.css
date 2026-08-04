@@ -1,0 +1,735 @@
+.helpdoit-root,
+.helpdoit-root * {
+  box-sizing: border-box;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+}
+
+/* Hide our own UI for the instant we snapshot the page underneath.
+   visibility (not display) keeps layout stable so the page doesn't reflow. */
+.helpdoit-capturing {
+  visibility: hidden;
+}
+
+/* Screenshot preview thumbnail in a chat message. */
+.helpdoit-shot {
+  display: block;
+  margin-top: 8px;
+  max-width: 100%;
+  max-height: 160px;
+  border-radius: 8px;
+  border: 1px solid rgba(0, 0, 0, 0.15);
+  cursor: zoom-in;
+}
+
+/* Floating launcher */
+.helpdoit-fab {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  z-index: 2147483647;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: #0d9488;
+  color: #fff;
+  border: none;
+  font-size: 26px;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 6px 20px rgba(13, 148, 136, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.helpdoit-fab:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 26px rgba(13, 148, 136, 0.55);
+}
+/* While recording, the launcher is the stop button — same red as the playback Stop. */
+.helpdoit-fab.is-recording {
+  background: #b91c1c;
+  box-shadow: 0 6px 20px rgba(185, 28, 28, 0.5);
+  animation: helpdoit-rec-pulse 1.4s ease-in-out infinite;
+}
+.helpdoit-fab.is-recording:hover {
+  box-shadow: 0 8px 26px rgba(185, 28, 28, 0.6);
+}
+@keyframes helpdoit-rec-pulse {
+  0%, 100% { box-shadow: 0 6px 20px rgba(185, 28, 28, 0.5); }
+  50% { box-shadow: 0 6px 22px rgba(185, 28, 28, 0.85), 0 0 0 6px rgba(185, 28, 28, 0.18); }
+}
+
+/* Panel */
+.helpdoit-panel {
+  position: fixed;
+  bottom: 88px;
+  right: 20px;
+  z-index: 2147483647;
+  width: 360px;
+  max-width: calc(100vw - 40px);
+  height: 520px;
+  max-height: calc(100vh - 120px);
+  background: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.18);
+  display: flex;
+  flex-direction: column;
+  color: #1f2937;
+}
+
+.helpdoit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  background: #0d9488;
+  color: #fff;
+}
+.helpdoit-title {
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: 0.2px;
+}
+.helpdoit-close {
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+}
+
+.helpdoit-context {
+  padding: 10px 16px;
+  background: #f0fdfa;
+  border-bottom: 1px solid #ccfbf1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.helpdoit-ctx-label {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.6px;
+  color: #0f766e;
+  font-weight: 700;
+}
+.helpdoit-ctx-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.helpdoit-ctx-url {
+  font-size: 11px;
+  color: #6b7280;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.helpdoit-messages {
+  flex: 1;
+  overflow-y: auto;
+  overflow-x: hidden;       /* vertical scroll only — never sideways */
+  min-width: 0;             /* let flex children shrink instead of forcing width */
+  padding: 14px 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  background: #fafafa;
+}
+.helpdoit-empty {
+  color: #9ca3af;
+  font-size: 13px;
+  text-align: center;
+  margin: auto 0;
+}
+.helpdoit-msg {
+  padding: 9px 12px;
+  border-radius: 12px;
+  font-size: 13px;
+  line-height: 1.45;
+  max-width: 85%;
+  min-width: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;  /* break long unbroken tokens (URLs) instead of overflowing */
+  word-break: break-word;
+}
+.helpdoit-msg-user {
+  align-self: flex-end;
+  background: #0d9488;
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+.helpdoit-msg-assistant {
+  align-self: flex-start;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-bottom-left-radius: 4px;
+}
+
+.helpdoit-input {
+  display: flex;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid #eee;
+  background: #fff;
+}
+.helpdoit-input input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  font-size: 13px;
+  outline: none;
+}
+.helpdoit-input input:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+.helpdoit-input button {
+  padding: 0 16px;
+  background: #0d9488;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.helpdoit-footer {
+  padding: 8px 16px;
+  font-size: 10px;
+  color: #9ca3af;
+  text-align: center;
+  background: #fff;
+  border-top: 1px solid #f3f4f6;
+}
+
+/* FAQ⇄Train segmented toggle (trainers/admins only), in the header. */
+.helpdoit-modes {
+  display: flex;
+  gap: 2px;
+  padding: 2px;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
+}
+.helpdoit-mode {
+  padding: 4px 10px;
+  border: none;
+  background: transparent;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 12px;
+  font-weight: 600;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.helpdoit-mode.is-active {
+  background: #fff;
+  color: #0d9488;
+}
+
+/* Train mode body */
+.helpdoit-train {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  flex: 1;
+  overflow-y: auto;
+}
+.helpdoit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+.helpdoit-field input,
+.helpdoit-field textarea {
+  font: inherit;
+  font-weight: 400;
+  font-size: 13px;
+  padding: 8px 10px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  outline: none;
+  resize: vertical;
+  color: #1f2937;
+}
+.helpdoit-field input:focus,
+.helpdoit-field textarea:focus {
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+.helpdoit-train-status {
+  font-size: 12px;
+  color: #0f766e;
+  background: rgba(13, 148, 136, 0.08);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.helpdoit-train-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+.helpdoit-train-actions button {
+  padding: 8px 14px;
+  background: #0d9488;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.helpdoit-train-actions button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+.helpdoit-train-status.error {
+  color: #b91c1c;
+  background: rgba(185, 28, 28, 0.08);
+}
+
+/* Tags input: chips + free text, with a suggestions row */
+.helpdoit-tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  padding: 5px 6px;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+}
+.helpdoit-tags input {
+  flex: 1;
+  min-width: 80px;
+  border: none;
+  outline: none;
+  padding: 3px;
+  font: inherit;
+  font-weight: 400;
+  font-size: 13px;
+}
+.helpdoit-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #ccfbf1;
+  color: #0f766e;
+  border-radius: 999px;
+  padding: 2px 4px 2px 9px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.helpdoit-tag button {
+  border: none;
+  background: transparent;
+  color: #0f766e;
+  cursor: pointer;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+}
+.helpdoit-tag-suggest {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 4px;
+}
+.helpdoit-tag-suggest button {
+  border: 1px solid #d1d5db;
+  background: #fff;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 12px;
+  color: #374151;
+  cursor: pointer;
+}
+.helpdoit-tag-suggest button:hover {
+  border-color: #0d9488;
+  color: #0f766e;
+}
+
+/* Recording controls */
+.helpdoit-record {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+.helpdoit-check {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 500;
+  color: #374151;
+}
+.helpdoit-check input {
+  width: auto;
+  margin: 0;
+}
+.helpdoit-record-btn {
+  padding: 8px 14px;
+  background: #0d9488;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.helpdoit-record-btn:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+.helpdoit-record-btn.is-recording {
+  background: #b91c1c;
+}
+.helpdoit-record-btn.is-saving {
+  background: #6b7280;
+  cursor: progress;
+  opacity: 0.85;
+}
+
+/* "or" divider */
+.helpdoit-or {
+  display: flex;
+  align-items: center;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.helpdoit-or::before,
+.helpdoit-or::after {
+  content: '';
+  flex: 1;
+  border-top: 1px solid #e5e7eb;
+  margin: 0 8px;
+}
+
+/* "Typing" indicator — bouncing dots while the assistant finds an answer. */
+.helpdoit-typing {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 12px 14px !important;
+}
+.helpdoit-typing span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #9ca3af;
+  display: inline-block;
+  animation: helpdoit-bounce 1.2s infinite ease-in-out;
+}
+.helpdoit-typing span:nth-child(2) {
+  animation-delay: 0.15s;
+}
+.helpdoit-typing span:nth-child(3) {
+  animation-delay: 0.3s;
+}
+@keyframes helpdoit-bounce {
+  0%,
+  60%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  30% {
+    transform: translateY(-5px);
+    opacity: 1;
+  }
+}
+
+/* "Show me how" — starts guided playback of the recorded walkthrough. */
+.helpdoit-showme-wrap {
+  margin-top: 10px;
+}
+.helpdoit-showme {
+  background: #0d9488;
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  padding: 7px 14px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.helpdoit-showme:hover {
+  background: #0f766e;
+}
+
+/* Suggested-answer bubbles (Verizon-style): clickable options under an assistant turn. */
+.helpdoit-options {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 8px;
+}
+.helpdoit-option {
+  text-align: left;
+  background: #fff;
+  border: 1px solid #0d9488;
+  color: #0f766e;
+  border-radius: 14px;
+  padding: 8px 12px;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s ease;
+}
+.helpdoit-option:hover {
+  background: rgba(13, 148, 136, 0.08);
+}
+.helpdoit-option-play {
+  color: #0d9488;
+  font-weight: 700;
+}
+
+/* "Go to the start page?" prompt before playback when you're on the wrong page. */
+.helpdoit-navprompt {
+  margin: 0 12px 8px;
+  padding: 10px 12px;
+  background: rgba(13, 148, 136, 0.08);
+  border: 1px solid rgba(13, 148, 136, 0.3);
+  border-radius: 10px;
+  font-size: 13px;
+  color: #0f766e;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.helpdoit-navprompt strong {
+  word-break: break-all;
+}
+.helpdoit-navprompt-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+.helpdoit-navprompt-actions button {
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  background: #0d9488;
+  color: #fff;
+  cursor: pointer;
+}
+.helpdoit-navprompt-no {
+  background: none !important;
+  color: #6b7280 !important;
+  border: 1px solid #d1d5db !important;
+}
+
+/* User attachments (FAQ): chips above the input + an attach button beside it. */
+.helpdoit-attachments {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 0 12px 6px;
+}
+.helpdoit-file-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #374151;
+  background: #f3f4f6;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 3px 8px;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.helpdoit-file-chip button {
+  border: none;
+  background: none;
+  cursor: pointer;
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0;
+}
+.helpdoit-msg-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 6px;
+}
+.helpdoit-attach {
+  flex: 0 0 auto;
+  background: #f3f4f6;
+  border: 1px solid #d1d5db;
+  border-radius: 10px;
+  cursor: pointer;
+  font-size: 15px;
+  padding: 0 10px;
+}
+.helpdoit-attach:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Review-before-save editor: editable step list + answer. */
+.helpdoit-review {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.helpdoit-steps {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-height: 220px;
+  overflow-y: auto;
+}
+.helpdoit-step {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.helpdoit-step-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.helpdoit-step-mode {
+  display: flex;
+  gap: 6px;
+  padding-left: 2px;
+}
+.helpdoit-step-mode select {
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 6px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  color: #374151;
+  background: #f9fafb;
+}
+.helpdoit-step-prompt {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 12px;
+  padding: 3px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  color: #1f2937;
+}
+.helpdoit-step.is-dup .helpdoit-step-caption {
+  border-color: #d97706;
+  background: rgba(217, 119, 6, 0.06);
+}
+.helpdoit-dup {
+  color: #d97706;
+  font-size: 13px;
+  flex: 0 0 auto;
+}
+.helpdoit-step-caption {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 13px;
+  padding: 6px 8px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  color: #1f2937;
+}
+.helpdoit-step-caption:focus {
+  outline: none;
+  border-color: #0d9488;
+  box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.15);
+}
+.helpdoit-step-actions {
+  display: flex;
+  gap: 2px;
+}
+.helpdoit-step-actions button {
+  width: 26px;
+  height: 28px;
+  border: 1px solid #e5e7eb;
+  background: #f9fafb;
+  border-radius: 6px;
+  cursor: pointer;
+  color: #374151;
+  font-size: 13px;
+  line-height: 1;
+}
+.helpdoit-step-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+.helpdoit-answer-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.helpdoit-regen {
+  background: none;
+  border: 1px solid #0d9488;
+  color: #0f766e;
+  border-radius: 999px;
+  padding: 2px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+.helpdoit-regen:disabled {
+  opacity: 0.6;
+  cursor: progress;
+}
+.helpdoit-discard {
+  background: none !important;
+  color: #6b7280 !important;
+  border: 1px solid #d1d5db !important;
+  margin-right: auto;
+}
+.helpdoit-preview {
+  background: #fff !important;
+  color: #0f766e !important;
+  border: 1px solid #0d9488 !important;
+}
+
+/* Read-only preview of the AI-generated answer after a recording is finalized. */
+.helpdoit-recorded {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.helpdoit-recorded-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #374151;
+}
+.helpdoit-recorded-answer {
+  font-size: 13px;
+  line-height: 1.45;
+  color: #1f2937;
+  white-space: pre-wrap;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  padding: 10px 12px;
+  max-height: 180px;
+  overflow-y: auto;
+}

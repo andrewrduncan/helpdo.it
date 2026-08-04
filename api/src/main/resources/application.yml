@@ -1,0 +1,135 @@
+spring:
+  application:
+    name: helpdoit-api
+
+  # Local secrets (OPENROUTER_API_KEY, GOOGLE_CLIENT_*, model overrides) come from
+  # a gitignored .env. Both locations are tried so it loads whether the working
+  # dir is api/ (e.g. `make dev-api`) or the repo root (e.g. IntelliJ's default).
+  # Optional: absent in CI / prod, where real environment variables are used.
+  config:
+    import:
+      - optional:file:./.env[.properties]
+      - optional:file:./api/.env[.properties]
+
+  # Auth — provider-agnostic OIDC login. Add a provider by adding a registration
+  # here; the rest of the app is unchanged (it trusts only our own app JWT).
+  # Dummy defaults keep the context loading without real keys (tests/CI); a real
+  # Google login needs GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET in api/.env.
+  security:
+    oauth2:
+      client:
+        registration:
+          google:
+            client-id: ${GOOGLE_CLIENT_ID:dummy-client-id}
+            client-secret: ${GOOGLE_CLIENT_SECRET:dummy-client-secret}
+            scope: openid, email, profile
+            # provider "google" is a Spring built-in (CommonOAuth2Provider) —
+            # issuer/endpoints/redirect-uri are inferred.
+
+  datasource:
+    url: jdbc:postgresql://localhost:5432/helpdoit
+    username: helpdoit
+    password: helpdoit_dev
+
+  jpa:
+    hibernate:
+      ddl-auto: validate          # Flyway owns the relational schema; JPA must agree, not edit
+    open-in-view: true            # POC convenience: lazy collections resolve in GraphQL field layer.
+                                  # Trade-off is N+1; revisit with DataLoaders.
+    show-sql: false
+
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+    baseline-on-migrate: true
+
+  graphql:
+    graphiql:
+      enabled: true               # /graphiql for interactive querying in dev
+    schema:
+      printer:
+        enabled: true             # /graphql/schema dumps the SDL
+
+  threads:
+    virtual:
+      enabled: true               # Tomcat request handling on virtual threads
+
+  # ---------------------------------------------------------------------------
+  # AI — Spring AI is wired here, but NEVER referenced by domain code. The app
+  # talks to AI exclusively through the ports in com.helpdoit.ai; the Spring AI
+  # adapters in com.helpdoit.ai.spring are the only classes that import it.
+  #
+  # Three chat providers are wired (openai/OpenRouter, anthropic, ollama). Spring
+  # AI autoconfigures all three ChatModel beans (they build offline with the
+  # placeholder keys below); a provider only joins the router when its real
+  # credential is set — see AiProvidersConfig. The active provider is chosen by
+  # `helpdoit.ai.provider` (and is overridable per request / at runtime).
+  #
+  # OpenRouter note: Spring AI 2.0's OpenAI client treats base-url as the FULL
+  # root incl. /v1 and appends /chat/completions + /embeddings.
+  # ---------------------------------------------------------------------------
+  ai:
+    model:
+      embedding: openai            # pin embeddings to OpenAI/OpenRouter (Ollama also has embeddings → avoid ambiguity; Anthropic has none)
+    openai:
+      api-key: ${OPENROUTER_API_KEY:dummy-key-not-set}   # placeholder lets the context load without a key (tests/CI)
+      base-url: https://openrouter.ai/api/v1
+      chat:
+        options:
+          model: ${HELPDOIT_CHAT_MODEL:openai/gpt-4o-mini}
+          temperature: 0.2
+      embedding:
+        options:
+          model: ${HELPDOIT_EMBEDDING_MODEL:openai/text-embedding-3-small}
+    anthropic:
+      api-key: ${ANTHROPIC_API_KEY:dummy-key-not-set}    # placeholder; provider enabled only when ANTHROPIC_API_KEY is real
+      chat:
+        options:
+          model: ${HELPDOIT_ANTHROPIC_MODEL:claude-sonnet-4-6}
+    ollama:
+      base-url: ${OLLAMA_BASE_URL:http://localhost:11434}
+      chat:
+        options:
+          model: ${HELPDOIT_OLLAMA_MODEL:llama3.1}
+    vectorstore:
+      pgvector:
+        initialize-schema: true        # Spring AI owns the vector_store table (separate from Flyway's domain schema)
+        index-type: HNSW
+        distance-type: COSINE_DISTANCE
+        dimensions: 1536               # text-embedding-3-small = 1536; set explicitly so startup never probes the model
+
+# helpdo.it app config
+helpdoit:
+  ai:
+    provider: ${HELPDOIT_AI_PROVIDER:openai}   # default active chat provider; override per-request or at runtime
+    model:
+      # Task-tier models, both optional refinements of HELPDOIT_CHAT_MODEL (the base default):
+      #   fast  = latency-critical ask path (grading, reformulation, index-expansion)
+      #   smart = off-path quality work (walkthrough summarization + vision)
+      # Unset → inherit HELPDOIT_CHAT_MODEL. Set HELPDOIT_FAST_MODEL to a faster model to speed
+      # up search; set HELPDOIT_SMART_MODEL to a stronger model (e.g. openai/gpt-4o) for summaries.
+      fast: ${HELPDOIT_FAST_MODEL:${HELPDOIT_CHAT_MODEL:openai/gpt-4o-mini}}
+      smart: ${HELPDOIT_SMART_MODEL:${HELPDOIT_CHAT_MODEL:openai/gpt-4o-mini}}
+  web:
+    base-url: ${HELPDOIT_WEB_BASE_URL:http://localhost:3000}   # admin portal; OIDC redirects the app JWT back here
+  jwt:
+    secret: ${HELPDOIT_JWT_SECRET:dev-only-change-me-helpdoit-jwt-signing-secret-0123456789}  # HS256; >=32 bytes
+  config:
+    # Discovery doc served at GET /api/config — the extension/portal need only the
+    # instance URL and read the rest from here.
+    ws-url: ${HELPDOIT_WS_URL:ws://localhost:8081}        # RSocket endpoint clients connect to
+    enabled-sites: ${HELPDOIT_ENABLED_SITES:}             # comma-separated host patterns (empty = all)
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, info, metrics, flyway
+
+logging:
+  level:
+    com.helpdoit: DEBUG
+    org.springframework.graphql: INFO

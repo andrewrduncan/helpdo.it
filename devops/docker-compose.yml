@@ -1,0 +1,28 @@
+name: helpdoit
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16     # postgres:16 + the `vector` extension, for the RAG store
+    container_name: helpdoit-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-helpdoit}
+      POSTGRES_USER: ${POSTGRES_USER:-helpdoit}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-helpdoit_dev}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      # Relational schema is owned by Flyway in the api/ project (applied on
+      # startup; no init-mount). The `vector_store` table is owned by Spring AI
+      # (initialize-schema: true) — it CREATE EXTENSION vector + builds the
+      # table/index on first boot. Both coexist in this one database.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-helpdoit} -d ${POSTGRES_DB:-helpdoit}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+volumes:
+  pgdata:
+    name: helpdoit_pgdata

@@ -1,0 +1,36 @@
+meta {
+  name: Health (GraphQL)
+  type: http
+  seq: 1
+}
+
+post {
+  url: {{baseUrl}}/graphql
+  body: graphql
+  auth: none
+}
+
+body:graphql {
+  query {
+    health {
+      application
+      status
+    }
+  }
+}
+
+tests {
+  test("application is helpdoit-api", function() {
+    expect(res.getBody().data.health.application).to.equal("helpdoit-api");
+  })
+
+  test("status begins with ok-", function() {
+    expect(res.getBody().data.health.status).to.match(/^ok-/);
+  })
+}
+
+docs {
+  Smoke-test query for the GraphQL endpoint (used by the admin training web
+  interface). Returns the Spring Boot version in the status string so you can
+  confirm what's actually deployed.
+}

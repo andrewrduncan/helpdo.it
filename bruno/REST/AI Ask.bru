@@ -1,0 +1,22 @@
+meta {
+  name: AI Ask (chat)
+  type: http
+  seq: 3
+}
+
+post {
+  url: {{baseUrl}}/api/ai/ask
+  body: json
+  auth: none
+}
+
+body:json {
+  {
+    "question": "In one sentence, what is helpdo.it?"
+  }
+}
+
+docs {
+  Round-trips a question through ChatModelPort -> OpenRouter chat model.
+  Smoke-test of the chat path. Needs OPENROUTER_API_KEY. Returns { reply }.
+}
